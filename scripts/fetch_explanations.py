@@ -7,17 +7,20 @@ so re-runs (and later tests) don't hit YouTube again — YouTube answers 429 if 
 """
 import html, os, re, subprocess, sys, time, urllib.request
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 PAGE = 'https://exam.toeic.co.kr/content/common/realQuestion.php'
 HOME = os.path.expanduser('~/.cache/toeic-mock-test')
 VENV, SUBS = os.path.join(HOME, 'ytenv'), os.path.join(HOME, 'subs')
-YTDLP = os.path.join(VENV, 'bin', 'yt-dlp')
+BIN = os.path.join(VENV, 'Scripts' if os.name == 'nt' else 'bin')  # Windows venvs put programs in Scripts\
+YTDLP = os.path.join(BIN, 'yt-dlp' + ('.exe' if os.name == 'nt' else ''))
 out = sys.argv[1]
 only = sys.argv[2].upper() if len(sys.argv) > 2 else ''
 os.makedirs(out, exist_ok=True); os.makedirs(SUBS, exist_ok=True)
 
 if not os.path.exists(YTDLP):
     subprocess.run([sys.executable, '-m', 'venv', VENV], check=True)
-    subprocess.run([os.path.join(VENV, 'bin', 'pip'), '-q', 'install', 'yt-dlp'], check=True)
+    subprocess.run([os.path.join(BIN, 'python'), '-m', 'pip', '-q', 'install', 'yt-dlp'], check=True)
 
 req = urllib.request.Request(PAGE, headers={'User-Agent': 'Mozilla/5.0'})
 s = urllib.request.urlopen(req, timeout=30).read().decode('utf-8', 'replace')
@@ -37,7 +40,7 @@ for mm in re.finditer(r'img\.youtube\.com/vi/([\w-]+)/hqdefault\.jpg', latest):
     label = re.match(r'"?[^>]*>?\s*(PART [^<]*?)(?: RC| LC|$| <)', label)
     vids.append((vid, (label.group(1) if label else '?').strip()))
 
-with open(os.path.join(out, 'videos.tsv'), 'w') as f:
+with open(os.path.join(out, 'videos.tsv'), 'w', encoding='utf-8') as f:
     f.writelines(f'{v}\t{t}\n' for v, t in vids)
 
 def clean(vtt):
@@ -55,7 +58,7 @@ for i, (vid, title) in enumerate(vids, 1):
     for attempt in range(4):
         if os.path.exists(vtt): break
         r = subprocess.run([YTDLP, '-q', '--skip-download', '--write-auto-subs', '--sub-langs', 'ko', '--sub-format', 'vtt',
-                            '-o', os.path.join(SUBS, vid), f'https://www.youtube.com/watch?v={vid}'], capture_output=True, text=True)
+                            '-o', os.path.join(SUBS, vid), f'https://www.youtube.com/watch?v={vid}'], capture_output=True, text=True, encoding='utf-8', errors='replace')
         if os.path.exists(vtt): break
         wait = 30 * (attempt + 1) if '429' in r.stderr else 5
         print(f'  {vid} 실패, {wait}초 뒤 다시 시도: {r.stderr.strip().splitlines()[-1:]}')
@@ -63,6 +66,6 @@ for i, (vid, title) in enumerate(vids, 1):
     else:
         print(f'  {vid} ({title}) 자막을 받지 못했어요. 건너뜀'); continue
     name = os.path.join(out, f'{i:02d}_{re.sub(r"[^0-9A-Za-z가-힣]+", "_", title).strip("_")}.txt')
-    open(name, 'w').write(clean(vtt))
+    open(name, 'w', encoding='utf-8').write(clean(vtt))
     print(f'{os.path.basename(name)}  {os.path.getsize(name) // 1000}KB')
     time.sleep(8)  # stay under YouTube's rate limit

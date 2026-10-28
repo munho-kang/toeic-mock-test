@@ -7,6 +7,8 @@ description: 인쇄용 토익(TOEIC L&R) 실전 모의고사 1회분(200문항)�
 
 사용자는 프로그래밍 비전공자이고, 종이로 뽑아서 실제 시험처럼 풀어요. 결과물은 실제 시험지와 같은 구조와 배치를 따라야 해요. 답변은 항상 한국어로, 쉽게 써요.
 
+macOS와 Windows에서 모두 동작해요. 아래 명령의 `python3`는 Windows에서 `python`으로 바꿔 실행해요. 듣기 음성은 macOS에서는 내장 `say`로, Windows에서는 Microsoft Edge 온라인 음성(edge-tts, 처음 실행할 때 자동 설치)으로 만들어요. Windows에서는 음성을 만들 때 인터넷이 필요해요.
+
 ## 결과물
 
 현재 작업 폴더 안의 `toeic-mock/<회차>회/` 폴더(예: `toeic-mock/2회/`)에 다음을 만들어요. 폴더 이름에 난이도는 붙이지 않아요(난이도는 문제지 제목에 들어가요). 사용자가 다른 위치를 말하면 그곳에 만들어요.
@@ -64,10 +66,10 @@ python3 -I ~/.claude/skills/toeic-mock-test/scripts/fetch_explanations.py <스�
 ### 4. 만들기와 점검
 
 ```bash
-~/.claude/skills/toeic-mock-test/scripts/build.sh <작업폴더> "<현재 작업 폴더>/toeic-mock/<회차>회"
+python3 ~/.claude/skills/toeic-mock-test/scripts/build.py <작업폴더> "<현재 작업 폴더>/toeic-mock/<회차>회"
 ```
 
-이 명령은 PDF 3개를 만들고 음성을 합성해서(macOS say와 ffmpeg) 결과 폴더에 넣어요. 음성 합성은 몇 분 걸려요. 듣기 내용을 바꾸지 않고 다시 만들 때는 맨 끝에 `--no-audio`를 붙여요.
+이 명령은 PDF 3개를 만들고 음성을 합성해서(macOS say 또는 Windows edge-tts, 그리고 ffmpeg) 결과 폴더에 넣어요. 음성 합성은 몇 분 걸려요. 듣기 내용을 바꾸지 않고 다시 만들 때는 맨 끝에 `--no-audio`를 붙여요.
 
 빌드하면 점검 보고가 출력돼요. 아래 항목을 확인하고, 문제가 있으면 data.js를 고쳐서 다시 빌드해요.
 - 200문항이 아니면 오류로 멈춰요.
@@ -75,7 +77,7 @@ python3 -I ~/.claude/skills/toeic-mock-test/scripts/fetch_explanations.py <스�
 - 돈·숫자 문제 후보 목록을 봐요. 다중 지문(176~200번)에 계산 문제가 2개 이상이면 다른 유형으로 바꿔요.
 - 지문별 단어 수를 봐요. 앞은 짧고 뒤는 긴 흐름인지 확인해요.
 
-그다음 눈으로 확인해요.
+그다음 눈으로 확인해요. `pdftoppm`과 `pdftotext`는 poppler에 들어 있어요. 설치돼 있지 않으면(주로 Windows) 이 두 확인은 건너뛰고 보고에 적어요.
 - `pdftoppm -r 60 -png -f 8 -l 8 <작업폴더>/print/booklet.pdf p3`처럼 Part 3쪽과 Part 7 첫 쪽을 이미지로 만들어 봐요. 글자 겹침, 표 깨짐, 가로선을 확인해요.
 - `pdftotext`로 해설지에서 몇 문항을 골라 정답과 해설이 맞는지 확인해요.
 - 무작위로 10문항쯤 골라 직접 풀어 봐요. 정답이 하나뿐인지, 다른 보기도 답이 될 수 있지 않은지 확인해요. 모의고사에서 가장 치명적인 실수는 정답이 둘인 문제예요.
@@ -91,4 +93,4 @@ python3 -I ~/.claude/skills/toeic-mock-test/scripts/fetch_explanations.py <스�
 
 ## 고칠 때
 
-이미 만든 회차를 고쳐 달라고 하면 `toeic-mock/<회차>회/.source/data.js`(예전 방식이면 `toeic-mock-*/.source/data.js`)를 스크래치패드로 복사해 고쳐요. 그다음 같은 결과 폴더로 `build.sh`를 다시 실행해요. LC를 바꾸지 않았으면 `--no-audio`를 붙여요. 사용자가 고쳐 달라고 한 내용이 앞으로도 지켜야 할 원칙이면 `references/trap-patterns.md`의 "사용자가 요청한 제작 원칙"에 추가해요.
+이미 만든 회차를 고쳐 달라고 하면 `toeic-mock/<회차>회/.source/data.js`(예전 방식이면 `toeic-mock-*/.source/data.js`)를 스크래치패드로 복사해 고쳐요. 그다음 같은 결과 폴더로 `build.py`를 다시 실행해요. LC를 바꾸지 않았으면 `--no-audio`를 붙여요. 사용자가 고쳐 달라고 한 내용이 앞으로도 지켜야 할 원칙이면 `references/trap-patterns.md`의 "사용자가 요청한 제작 원칙"에 추가해요.

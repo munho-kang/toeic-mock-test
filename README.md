@@ -30,26 +30,38 @@ toeic-mock/
 
 ## 필요한 것
 
-이 스킬은 **macOS**에서 동작해요. 음성은 macOS에 들어 있는 `say` 명령으로 만들어요.
+이 스킬은 **macOS**와 **Windows**에서 동작해요. 듣기 음성은 컴퓨터에 따라 다르게 만들어요.
 
-| 프로그램 | 용도 | 설치 방법 |
-|---|---|---|
-| Claude Code | 스킬 실행 | https://claude.com/claude-code |
-| Node.js | 시험지 화면(HTML) 만들기 | `brew install node` |
-| Google Chrome | HTML을 PDF로 저장 | 앱 설치 (`/Applications`에 있어야 해요) |
-| ffmpeg | 음성을 MP3로 변환 | `brew install ffmpeg` |
-| poppler | PDF 쪽수 확인 | `brew install poppler` |
-| Python 3 | 자막 받기 | macOS 기본 포함 |
+- **macOS**: 맥에 들어 있는 읽어 주기 기능(`say`)을 써요. 인터넷이 없어도 돼요.
+- **Windows**: Microsoft Edge의 온라인 음성(edge-tts)을 써요. 미국·영국·호주 억양이 모두 있어요. 음성을 만들 때 **인터넷 연결이 필요해요.**
 
-자막을 받는 도구(yt-dlp)는 처음 실행할 때 `~/.cache/toeic-mock-test/` 안에 자동으로 설치돼요.
+| 프로그램 | 용도 | macOS 설치 | Windows 설치 |
+|---|---|---|---|
+| Claude Code | 스킬 실행 | https://claude.com/claude-code | 같음 |
+| Node.js | 시험지 화면(HTML) 만들기 | `brew install node` | `winget install OpenJS.NodeJS.LTS` |
+| Google Chrome | HTML을 PDF로 저장 | 앱 설치 | `winget install Google.Chrome` |
+| ffmpeg | 음성을 MP3로 변환 | `brew install ffmpeg` | `winget install Gyan.FFmpeg` |
+| Python 3 | 자막 받기, 음성 만들기 | 기본 포함 | `winget install Python.Python.3.12` |
+| poppler | PDF 쪽수 확인 (선택) | `brew install poppler` | `winget install oschwartz10612.Poppler` |
+
+Windows에서는 위 명령을 **PowerShell**(시작 메뉴에서 검색)에 붙여넣으면 돼요. 설치한 뒤에는 PowerShell과 Claude Code를 한 번 껐다 켜야 새 프로그램을 찾을 수 있어요. poppler는 없어도 시험지는 만들어지고, 쪽수 확인만 건너뛰어요.
+
+자막을 받는 도구(yt-dlp)와 Windows용 음성 도구(edge-tts)는 처음 실행할 때 `~/.cache/toeic-mock-test/` 안에 자동으로 설치돼요.
 
 ## 설치
 
 이 폴더를 Claude Code의 스킬 폴더에 복사하면 돼요. 아래 명령을 터미널에 붙여넣으면 됩니다.
 
 ```bash
+# macOS
 git clone <이 저장소 주소>
 cp -R <저장소 폴더>/toeic-mock-test ~/.claude/skills/
+```
+
+```powershell
+# Windows (PowerShell)
+git clone <이 저장소 주소>
+Copy-Item -Recurse <저장소 폴더>\toeic-mock-test $HOME\.claude\skills\
 ```
 
 Claude Code를 다시 열면 스킬 목록에 `toeic-mock-test`가 보여요.
@@ -74,18 +86,20 @@ toeic-mock-test/
 └── scripts/
     ├── fetch_explanations.py      # 최신 기출 해설 영상 목록 찾기 + 한국어 자막 받기
     ├── gen.js                     # data.js → 문제지·답안지·해설지 HTML + 음성 대본
-    ├── audio.py                   # 음성 대본 → MP3 (macOS say + ffmpeg)
-    └── build.sh                   # 위 과정을 한 번에 실행하고 결과 폴더에 정리
+    ├── audio.py                   # 음성 대본 → MP3 (macOS say 또는 Windows edge-tts + ffmpeg)
+    └── build.py                   # 위 과정을 한 번에 실행하고 결과 폴더에 정리
 ```
 
 스크립트만 직접 쓸 수도 있어요. 예를 들어 data.js가 있는 폴더에서 시험지를 다시 만들려면 이렇게 하면 돼요.
 
 ```bash
 # 작업폴더/data.js를 읽어 결과 폴더에 PDF 3개와 MP3를 만들어요
-scripts/build.sh <작업폴더> <결과폴더>
+python3 scripts/build.py <작업폴더> <결과폴더>
 # 듣기 내용을 바꾸지 않았으면 음성 합성을 건너뛰어요
-scripts/build.sh <작업폴더> <결과폴더> --no-audio
+python3 scripts/build.py <작업폴더> <결과폴더> --no-audio
 ```
+
+Windows에서는 `python3` 대신 `python`을 써요.
 
 ## 결과가 저장되는 곳
 
